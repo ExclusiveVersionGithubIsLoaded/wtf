@@ -1,0 +1,135 @@
+local Fluent = loadstring(game:HttpGet("https://github.com/dawid-scripts/Fluent/releases/latest/download/main.lua"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/SaveManager.lua"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/dawid-scripts/Fluent/master/Addons/InterfaceManager.lua"))()
+
+local Window = Fluent:CreateWindow({
+    Title = "Version Hub Rework ♡",
+    SubTitle = "Untitled Drill Game",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(580, 460),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    MinimizeKey = Enum.KeyCode.LeftControl
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "hammer" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- Services
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local OreService = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("Knit"):WaitForChild("Services"):WaitForChild("OreService")
+local RE = OreService:WaitForChild("RE")
+
+-- Variables
+local spawnOreToggle = false
+local autoSellToggle = false
+local autoBuyDrillToggle = false
+local selectedDrill = "Standard Drill"
+
+-- Drill options
+local drillOptions = {
+    "Standard Drill",
+    "Reinforced Drill",
+    "Twin Drill",
+    "Tri Drill",
+    "Charged Drill",
+    "Plasma Drill",
+    "Laser Drill",
+    "Quad Drill",
+    "Thermal Drill",
+    "Surge Drill"
+}
+
+-- Main Tab
+Tabs.Main:AddToggle("SpawnOreToggle", {
+    Title = "Adding a lot of ore",
+    Default = false,
+    Callback = function(value)
+        spawnOreToggle = value
+        if value then
+            spawnOreLoop()
+        end
+    end
+})
+
+Tabs.Main:AddToggle("AutoSellToggle", {
+    Title = "Auto Sell All",
+    Default = false,
+    Callback = function(value)
+        autoSellToggle = value
+        if value then
+            autoSellLoop()
+        end
+    end
+})
+
+Tabs.Main:AddDropdown("DrillSelect", {
+    Title = "Select Drill",
+    Values = drillOptions,
+    Default = "Standard Drill",
+    Multi = false,
+    Callback = function(value)
+        selectedDrill = value
+    end
+})
+
+Tabs.Main:AddToggle("AutoBuyDrillToggle", {
+    Title = "Auto Buy Selected Drill",
+    Default = false,
+    Callback = function(value)
+        autoBuyDrillToggle = value
+        if value then
+            autoBuyDrillLoop()
+        end
+    end
+})
+
+-- Functions
+function spawnOreLoop()
+    coroutine.wrap(function()
+        while spawnOreToggle do
+            RE:WaitForChild("RequestRandomOre"):FireServer()
+            task.wait(0.0004)
+        end
+    end)()
+end
+
+function autoSellLoop()
+    coroutine.wrap(function()
+        while autoSellToggle do
+            RE:WaitForChild("SellAll"):FireServer()
+            task.wait(0.5)
+        end
+    end)()
+end
+
+function autoBuyDrillLoop()
+    coroutine.wrap(function()
+        while autoBuyDrillToggle do
+            local args = { selectedDrill }
+            RE:WaitForChild("BuyDrill"):FireServer(unpack(args))
+            task.wait(0.2)
+        end
+    end)()
+end
+
+-- Settings Tab
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes{}
+InterfaceManager:SetFolder("VersionHub")
+SaveManager:SetFolder("VersionHub/UDG")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+
+Library:Notify{
+    Title = "Version Hub",
+    Content = "Script Is Loaded",
+    Duration = 4
+}
+
+SaveManager:LoadAutoloadConfig()
