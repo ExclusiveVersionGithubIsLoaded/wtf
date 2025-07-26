@@ -1,0 +1,177 @@
+-- 💼 Fluent UI + Деньги-Фарм + TurboSpam + Слайдер скорости
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+local Window = Library:CreateWindow {
+    Title = "Version Hub Rework♡",
+    SubTitle = "Merge Tower Defense",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(830, 525),
+    Resize = true,
+    MinSize = Vector2.new(470, 380),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    MinimizeKey = Enum.KeyCode.RightControl
+}
+
+local Tabs = {
+    Main = Window:CreateTab{ Title = "Main", Icon = "hammer" },
+    Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
+}
+
+local Options = Library.Options
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local LocalPlayer = Players.LocalPlayer
+local vector = Vector3.new
+local pos = vector(0.6860405206680298, -2.2630889415740967, -372.0553283691406)
+
+-- Переменные
+local isFarming = false
+local isSpamming = false
+local isConverting = false
+local spamDelay = 0.005
+local minDelay = 0.0005
+local maxDelay = 0.03
+local threads = 6
+local Remote = ReplicatedStorage:WaitForChild("Signals"):WaitForChild("RemoteEvents"):WaitForChild("GetWoolRemote")
+local PutRemote = ReplicatedStorage:WaitForChild("Signals"):WaitForChild("RemoteEvents"):WaitForChild("PutRemote")
+
+-- Toggle авто фарма денег
+Tabs.Main:CreateToggle("AutoFarmToggle", {
+    Title = "Auto Collect Money",
+    Default = false,
+    Callback = function(state) isFarming = state end
+})
+
+-- Toggle авто конвертации
+Tabs.Main:CreateToggle("ConvertToggle", {
+    Title = "Auto Load Energy To Convert",
+    Default = false,
+    Callback = function(state) isConverting = state end
+})
+
+-- Toggle Turbo Спамера
+Tabs.Main:CreateToggle("TurboSpam", {
+    Title = "Auto Add Energy",
+    Default = false,
+    Callback = function(state) isSpamming = state end
+})
+Library:Notify{
+    Title = "INFO",
+    Content = "earnings depend on the level of your turrets",
+    Duration = 3
+}
+
+
+-- Слайдер задержки
+local DesiredSpeed = 16
+local IsSpeedLoopRunning = false
+
+Tabs.Main:CreateSlider("WalkSpeedSlider", {
+    Title = "Walkspeed",
+    Description = "Change Your Walkspeed",
+    Default = 16,
+    Min = 10,
+    Max = 500,
+    Rounding = 1,
+    Callback = function(Value)
+        DesiredSpeed = Value
+        local player = game:GetService("Players").LocalPlayer
+        local character = player.Character or player.CharacterAdded:Wait()
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid.WalkSpeed = DesiredSpeed
+        end
+
+        if not IsSpeedLoopRunning then
+            IsSpeedLoopRunning = true
+            task.spawn(function()
+                while IsSpeedLoopRunning do
+                    local char = player.Character
+                    if char then
+                        local hum = char:FindFirstChildOfClass("Humanoid")
+                        if hum and hum.WalkSpeed ~= DesiredSpeed then
+                            hum.WalkSpeed = DesiredSpeed
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            end)
+        end
+    end
+})
+
+
+-- Фарм денег (телепорт денег к игроку)
+task.spawn(function()
+    while true do
+        if isFarming then
+            local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local hrp = char:WaitForChild("HumanoidRootPart")
+            for _, obj in ipairs(workspace:GetChildren()) do
+                if obj.Name == "Money" and obj:IsA("BasePart") then
+                    pcall(function()
+                        obj.CFrame = hrp.CFrame + Vector3.new(math.random(-2,2), 0, math.random(-2,2))
+                        obj.CanCollide = false
+                        obj.Transparency = 1
+                        for _, d in ipairs(obj:GetChildren()) do
+                            if d:IsA("Decal") then d:Destroy() end
+                        end
+                    end)
+                    task.wait(0.05)
+                end
+            end
+        end
+        task.wait(0.3)
+    end
+end)
+
+-- Конвертация в деньги
+task.spawn(function()
+    while true do
+        if isConverting then
+            pcall(function()
+                PutRemote:FireServer()
+            end)
+            task.wait(0.3)
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- Turbo Wool Спамер
+for t = 1, threads do
+    task.spawn(function()
+        while true do
+            if isSpamming then
+                for i = 1, 10 do
+                    pcall(function()
+                        Remote:FireServer(i, pos)
+                    end)
+                    task.wait(spamDelay)
+                end
+            end
+            task.wait()
+        end
+    end)
+end
+
+-- Save & Interface
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes{}
+InterfaceManager:SetFolder("VersionHub")
+SaveManager:SetFolder("VersionHub/Merge Tower Defense")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+SaveManager:LoadAutoloadConfig()
+
+Library:Notify{
+    Title = "Loaded",
+    Content = "Script Is Ready",
+    Duration = 4
+}
