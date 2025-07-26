@@ -1,0 +1,165 @@
+-- ⛓️ Загрузки Fluent Renewed и аддонов
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+-- 🪟 Окно
+local Window = Library:CreateWindow{
+    Title = `Version Hub Rework♡`,
+    SubTitle = "Merge gun",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(830, 525),
+    Resize = true,
+    MinSize = Vector2.new(470, 380),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    MinimizeKey = Enum.KeyCode.RightControl
+}
+
+-- 📁 Вкладки
+local Tabs = {
+    Main = Window:CreateTab{ Title = "Main", Icon = "zap" },
+    Giver = Window:CreateTab{ Title = "Giver", Icon = "package" },
+    LocalPlayer = Window:CreateTab{ Title = "Local Player", Icon = "user" },
+    Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
+}
+
+local Options = Library.Options
+
+-- 💥 Пулевой спам через многопоточность
+local isBulletSpamming = false
+local bulletArgs = {
+    20,
+    Vector3.new(200.56552124023438, -0.27634912729263306, -195.63853454589844)
+}
+
+function StartBulletSpam()
+    for _ = 1, 10 do
+        task.spawn(function()
+            while isBulletSpamming do
+                pcall(function()
+                    game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("GetDropRemote"):FireServer(unpack(bulletArgs))
+                end)
+                task.wait()
+            end
+        end)
+    end
+end
+
+function StopBulletSpam()
+    isBulletSpamming = false
+end
+
+Tabs.Main:CreateToggle("BulletSpam", {
+    Title = "Giving a Lot Of Bullets",
+    Default = false
+}):OnChanged(function()
+    isBulletSpamming = Options.BulletSpam.Value
+    if isBulletSpamming then
+        StartBulletSpam()
+    else
+        StopBulletSpam()
+    end
+end)
+
+-- 📦 Утилита для создания чекбоксов на спам кнопок
+local function CreateSpamToggle(id, name, delay)
+    local state = false
+    Tabs.Main:CreateToggle(id, {Title = name, Default = false}):OnChanged(function()
+        state = Options[id].Value
+        if state then
+            task.spawn(function()
+                while state do
+                    pcall(function()
+                        game:GetService("ReplicatedStorage"):WaitForChild("Remote"):WaitForChild("ButtonPressRemote"):FireServer(id)
+                    end)
+                    task.wait(delay)
+                    state = Options[id].Value
+                end
+            end)
+        end
+    end)
+end
+
+-- 🧠 Все аргументы для спама
+CreateSpamToggle("Put", " Auto Deposit ", 1)
+CreateSpamToggle("Upgrade", " Auto Upgrade", 0.5)
+CreateSpamToggle("Merge", " Auto Merge", 1)
+CreateSpamToggle("Add", " Auto Add 1", 1)
+CreateSpamToggle("Add3", " Auto Add 3 ", 1)
+CreateSpamToggle("Add10", " Auto Add 10 ", 1)
+CreateSpamToggle("Add30", " Auto Add 30 ", 1)
+CreateSpamToggle("Add50", " Auto Add 50 ", 1)
+CreateSpamToggle("Add100", " Auto Add 100 ", 1)
+CreateSpamToggle("Add1000", " Auto Add 1000 ", 1)
+
+-- 🔫 Выдача пушки (телепорт к ней)
+Tabs.Giver:CreateButton{
+    Title = "🔥 TP to Admin Bazooka",
+    Description = "you MAY take a bazooka",
+    Callback = function()
+        local player = game:GetService("Players").LocalPlayer
+        local char = player.Character or player.CharacterAdded:Wait()
+        local hrp = char:WaitForChild("HumanoidRootPart")
+        local weapon = workspace:FindFirstChild("Weapons_ZZAP")
+        if weapon and weapon:FindFirstChild("Flame Thrower") then
+            local box = weapon["Flame Thrower"]:FindFirstChild("Box009")
+            if box then
+                hrp.CFrame = box.CFrame + Vector3.new(0, 2, 0)
+                Library:Notify{
+                    Title = "bazooka",
+                    Content = "idk what is this, but you can take a bazooka if you are lucky",
+                    Duration = 5
+                }
+            end
+        end
+    end
+}
+
+-- 🏃 Local Player: слайдеры скорости
+local SliderWalk = Tabs.LocalPlayer:CreateSlider("SpeedWalk", {
+    Title = "🚶‍♂️ Walkspeed",
+    Default = 16,
+    Min = 1,
+    Max = 100,
+    Rounding = 1
+})
+
+local SliderSprint = Tabs.LocalPlayer:CreateSlider("SpeedSprint", {
+    Title = "🏃‍♂️ Sprint Speed",
+    Default = 24,
+    Min = 1,
+    Max = 150,
+    Rounding = 1
+})
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            local gui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+            gui.Sprint.Speed_Walk.Value = SliderWalk.Value
+            gui.Sprint.Speed_Sprint.Value = SliderSprint.Value
+        end)
+        task.wait(5)
+    end
+end)
+
+-- 💾 Сохранялки
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes{}
+InterfaceManager:SetFolder("VersionHub")
+SaveManager:SetFolder("VersionHub/Merge Gun")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Window:SelectTab(1)
+
+Library:Notify{
+    Title = "Version Hub",
+    Content = "Script Is Loaded",
+    Duration = 4
+}
+
+SaveManager:LoadAutoloadConfig()
