@@ -1,0 +1,79 @@
+-- Load Fluent Renewed and addons
+local Fluent = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+-- Variables
+local magnetEnabled = false
+local player = game.Players.LocalPlayer
+
+-- Create UI
+local Window = Fluent:CreateWindow({
+    Title = "Version Hub♡",
+    SubTitle = "Be a Hole",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(460, 400),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    MinimizeKey = Enum.KeyCode.RightControl
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "magnet" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" })
+}
+
+-- Function to update MagnetValue
+local function setMagnetPower(value)
+    local folder = workspace:FindFirstChild("CharacterFolders")
+    if not folder then return end
+
+    local characterFolder = folder:FindFirstChild(player.Name)
+    if not characterFolder then return end
+
+    local magnet = characterFolder:FindFirstChild("MagnetValue")
+    if magnet and magnet:IsA("NumberValue") then
+        magnet.Value = value
+    end
+end
+
+-- Toggle for enabling/disabling the magnet boost
+Tabs.Main:CreateToggle("MagnetToggle", {
+    Title = "Eat Full Map",
+    Default = false,
+    Callback = function(state)
+        magnetEnabled = state
+        if state then
+            setMagnetPower(999)
+            Fluent:Notify({
+                Title = "Version Hub",
+                Content = "Enabled!",
+                Duration = 4
+            })
+        else
+            setMagnetPower(1)
+            Fluent:Notify({
+                Title = "Version Hub",
+                Content = "Disabled",
+                Duration = 4
+            })
+        end
+    end
+})
+
+-- Setup config and theme saving
+SaveManager:SetLibrary(Fluent)
+InterfaceManager:SetLibrary(Fluent)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetFolder("VersionHub")
+InterfaceManager:SetFolder("VersionHub/Be a Hole")
+
+SaveManager:BuildConfigSection(Tabs.Settings)
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+
+-- Initial notification
+Fluent:Notify({
+    Title = "Version Hub",
+    Content = "Script is Loaded.",
+    Duration = 5
+})
