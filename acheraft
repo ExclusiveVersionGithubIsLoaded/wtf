@@ -1,0 +1,116 @@
+-- 🔁 Fluent UI версия мегаскрипта фарма
+local Library = loadstring(game:HttpGetAsync("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGetAsync("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+local Window = Library:CreateWindow{
+    Title = "Version Hub ♡ ",
+    SubTitle = "Raft Survival",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(800, 550),
+    MinSize = Vector2.new(470, 380),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    MinimizeKey = Enum.KeyCode.RightControl
+}
+
+local Tabs = {
+    Farm = Window:CreateTab{ Title = "AutoFarm", Icon = "zap" },
+    Settings = Window:CreateTab{ Title = "Settings", Icon = "settings" }
+}
+
+local Options = Library.Options
+
+-- 🌪 Настройки фарма
+local CALLS_PER_TICK = 12500
+local THREADS_PER_TARGET = 500
+
+-- 🔌 Remote доступ
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local remoteBase = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index")
+local knit = remoteBase:WaitForChild("sleitnick_knit@1.7.0"):WaitForChild("knit")
+local services = knit:WaitForChild("Services"):WaitForChild("EventService"):WaitForChild("RF")
+
+local mineRemote = services:WaitForChild("MineHarvestable")
+
+-- 🎯 Список целей
+local targets = {
+    {Name = "Wood", Items = {"Wood Tree1", "Wood Tree2", "Wood Tree3", "Wood Tree4"}},
+    {Name = "Fish", Items = {"Fish Net1", "Fish Net2", "Fish Net3", "Fish Net4"}},
+    {Name = "Carrot", Items = {"Carrot Crop1", "Carrot Crop2", "Carrot Crop3", "Carrot Crop4"}},
+    {Name = "Coin", Items = {"Coin Tree1", "Coin Tree2", "Coin Tree3", "Coin Tree4"}},
+    {Name = "Eggplant", Items = {"Eggplant Crop1", "Eggplant Crop2", "Eggplant Crop3", "Eggplant Crop4"}},
+    {Name = "Melon", Items = {"Melon Crop1", "Melon Crop2", "Melon Crop3", "Melon Crop4"}},
+    {Name = "Crab", Items = {"Crab Net1", "Crab Net2", "Crab Net3", "Crab Net4"}},
+    {Name = "Can", Items = {"Can Net1", "Can Net2", "Can Net3", "Can Net4"}},
+    {Name = "Plastic", Items = {"PlasticBottle Net1", "PlasticBottle Net2", "PlasticBottle Net3", "PlasticBottle Net4"}},
+    {Name = "Big Fish", Items = {"Big Fish Net1", "Big Fish Net2", "Big Fish Net3", "Big Fish Net4"}},
+    {Name = "Coconut", Items = {"Coconut Crop1", "Coconut Crop2", "Coconut Crop3", "Coconut Crop4"}},
+    {Name = "Pineapple", Items = {"Pineapple Crop1", "Pineapple Crop2", "Pineapple Crop3", "Pineapple Crop4"}},
+    {Name = "Lobster", Items = {"Lobster Net1", "Lobster Net2", "Lobster Net3", "Lobster Net4"}},
+    {Name = "Starfish", Items = {"Starfish Net1", "Starfish Net2", "Starfish Net3", "Starfish Net4"}},
+    {Name = "Grape", Items = {"Grape Crop1", "Grape Crop2", "Grape Crop3", "Grape Crop4"}},
+    {Name = "Banana", Items = {"Banana Crop1", "Banana Crop2", "Banana Crop3", "Banana Crop4"}},
+    {Name = "Strawberry", Items = {"Strawberry Crop1", "Strawberry Crop2", "Strawberry Crop3", "Strawberry Crop4"}},
+    {Name = "Silver", Items = {"Silver Net1", "Silver Net2", "Silver Net3", "Silver Net4"}},
+    {Name = "Gold", Items = {"Gold Net1", "Gold Net2", "Gold Net3", "Gold Net4"}},
+    {Name = "Pearl", Items = {"Pearl Net1", "Pearl Net2", "Pearl Net3", "Pearl Net4"}},
+    {Name = "Squid", Items = {"Squid Net1", "Squid Net2", "Squid Net3", "Squid Net4"}},
+    {Name = "Cherry", Items = {"Cherry Crop1", "Cherry Crop2", "Cherry Crop3", "Cherry Crop4"}},
+    {Name = "Seagull", Items = {"Seagull Nest1", "Seagull Nest2", "Seagull Nest3", "Seagull Nest4"}},
+    {Name = "Bird", Items = {"Bird Nest1", "Bird Nest2", "Bird Nest3", "Bird Nest4"}},
+    {Name = "Eagle", Items = {"Eagle Nest1", "Eagle Nest2", "Eagle Nest3", "Eagle Nest4"}}
+}
+
+-- 🧠 Чекбоксы + логика
+for i, target in ipairs(targets) do
+    local toggle = Tabs.Farm:CreateToggle(target.Name.."Toggle", {Title = target.Name, Default = false})
+
+    toggle:OnChanged(function(state)
+        if state then
+            for t = 1, THREADS_PER_TARGET do
+                task.spawn(function()
+                    while Options[target.Name.."Toggle"].Value do
+                        for _, item in ipairs(target.Items) do
+                            for _ = 1, CALLS_PER_TICK do
+                                if not Options[target.Name.."Toggle"].Value then return end
+                                task.defer(function()
+                                    pcall(function()
+                                        mineRemote:InvokeServer(item)
+                                    end)
+                                end)
+                                task.wait(0.01)
+                            end
+                        end
+                        task.wait(0.1)
+                    end
+                end)
+            end
+        end
+    end)
+end
+
+-- Система сохранения и интерфейса
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes{}
+InterfaceManager:SetFolder("VersionHub")
+SaveManager:SetFolder("VersionHub/Raft Survival")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+Window:SelectTab(1)
+
+Library:Notify{
+    Title = "Version Hub",
+    Content = "Script Is Loaded",
+    Duration = 4
+}
+
+Library:Notify{
+    Title = "Version Hub",
+    Content = "autofarm is fast, but because of this the server lags a lot, so do not keep the toggle on for a long time or you will need to rejoin ",
+    Duration = 10
+}
+
+SaveManager:LoadAutoloadConfig()
