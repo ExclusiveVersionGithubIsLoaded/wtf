@@ -1,0 +1,162 @@
+local Library = loadstring(game:HttpGet("https://github.com/ActualMasterOogway/Fluent-Renewed/releases/latest/download/Fluent.luau"))()
+local SaveManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/SaveManager.luau"))()
+local InterfaceManager = loadstring(game:HttpGet("https://raw.githubusercontent.com/ActualMasterOogway/Fluent-Renewed/master/Addons/InterfaceManager.luau"))()
+
+local Window = Library:CreateWindow({
+    Title = "Version Hub Rework♡",
+    SubTitle = "Hatch And Feed A Brainrot",
+    TabWidth = 160,
+    Size = UDim2.fromOffset(830, 525),
+    Acrylic = true,
+    Theme = "VSC Dark+",
+    Center = true,
+    Resizable = true,
+})
+
+local Tabs = {
+    Main = Window:AddTab({ Title = "Main", Icon = "hammer" }),
+    Settings = Window:AddTab({ Title = "Settings", Icon = "settings" }),
+}
+
+-- Получаем имя локального игрока
+local Player = game:GetService("Players").LocalPlayer
+local Char = Player.Character or Player.CharacterAdded:Wait()
+local PlotName = Player.Name .. "_Plot"
+local Plot = workspace:WaitForChild("PlayerPlots"):WaitForChild(PlotName)
+
+-- Пути до ClickDetector'ов
+local ClickParts = {
+    Plot.Farm1Folder.Button.Part,
+    Plot.Farm1Folder.Button.Part1,
+    Plot.Farm1Folder.Button.Click,
+}
+
+-- ⛏️ Сверхбыстрый спам ClickDetector'ов
+local SpamEnabled = false
+game:GetService("RunService").Heartbeat:Connect(function()
+    if SpamEnabled then
+        for _, part in ipairs(ClickParts) do
+            local clickDetector = part:FindFirstChildOfClass("ClickDetector")
+            if clickDetector then
+                fireclickdetector(clickDetector)
+            end
+        end
+    end
+end)
+
+Tabs.Main:AddToggle("UltraSpam", {
+    Title = "Auto click to food pump ",
+    Default = false,
+    Callback = function(state)
+        SpamEnabled = state
+    end
+})
+
+local Spamming = false
+local Remote = game:GetService("ReplicatedStorage"):WaitForChild("RemoteEvents"):WaitForChild("LassoBattle"):WaitForChild("Click")
+
+Tabs.Main:AddToggle("FastSpam", {
+    Title = "Auto Lasso Spam",
+    Default = false
+}):OnChanged(function(v)
+    Spamming = v
+    if v then
+        coroutine.wrap(function()
+            while Spamming do
+                Remote:FireServer()
+                task.wait(0.0001)
+            end
+        end)()
+    end
+end)
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerName = LocalPlayer.Name
+
+local function DisableHoldDuration()
+    local PlotPath = "workspace.PlayerPlots." .. PlayerName .. "_Plot"
+
+    Library:Notify({
+                        Title = "Success",
+                        Content = "Place Now Doesn't Have a Cooldown",
+                        Duration = 1
+                    })
+    
+    for i = 1, 6 do
+        local Prompt = game:GetService("Workspace"):WaitForChild("PlayerPlots")[PlayerName .. "_Plot"]["Plot" .. i].CharacterPlot.PlacePrompt
+        
+                    
+end
+end
+Tabs.Main:AddButton({
+    Title = "No Cooldown",
+    Description = "Disable Cooldown To Place",
+    Callback = function()
+        DisableHoldDuration()
+    end
+})
+
+
+-- 🧾 Set HoldDuration = 0
+Tabs.Main:AddButton({
+    Title = " No Cooldown To Sell",
+    Callback = function()
+        local sellerPrompt = Plot:FindFirstChild("CharacterSeller", true)
+        if sellerPrompt then
+            local seller = sellerPrompt:FindFirstChild("Seller")
+            if seller and seller:FindFirstChild("HumanoidRootPart") then
+                local prompt = seller.HumanoidRootPart:FindFirstChild("SellPrompt")
+                if prompt and prompt:IsA("ProximityPrompt") then
+                    prompt.HoldDuration = 0
+                    Library:Notify({
+                        Title = "Success",
+                        Content = "Sell Now Doesn't Have a Cooldown",
+                        Duration = 1
+                    })
+                end
+            end
+        end
+    end
+})
+
+Tabs.Main:AddButton({
+    Title = " Teleport to Seller",
+    Callback = function()
+        local sellerPrompt = Plot:FindFirstChild("CharacterSeller", true)
+        if sellerPrompt then
+            local seller = sellerPrompt:FindFirstChild("Seller")
+            if seller and seller:FindFirstChild("HumanoidRootPart") then
+                Char:PivotTo(seller.HumanoidRootPart.CFrame + Vector3.new(0, 3, 0))
+                Library:Notify({
+                    Title = "Teleported",
+                    Content = "You have been teleported to Seller!",
+                    Duration = 2
+                })
+            end
+        end
+    end -- закрытие function
+}) -- ← вот это у тебя отсутствовало
+
+
+
+
+-- Сохранялка по ГОСТу
+SaveManager:SetLibrary(Library)
+InterfaceManager:SetLibrary(Library)
+SaveManager:IgnoreThemeSettings()
+SaveManager:SetIgnoreIndexes({})
+InterfaceManager:SetFolder("FluentScriptHub")
+SaveManager:SetFolder("FluentScriptHub/specific-game")
+InterfaceManager:BuildInterfaceSection(Tabs.Settings)
+SaveManager:BuildConfigSection(Tabs.Settings)
+
+Window:SelectTab(1)
+
+Library:Notify{
+    Title = "Version Hub",
+    Content = "The script is loaded.",
+    Duration = 3
+}
+
+SaveManager:LoadAutoloadConfig()
